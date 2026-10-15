@@ -1,3 +1,6 @@
 # Archivos locales; no forman parte de la aplicación.
 .DS_Store
 .playwright-mcp/
+
+# Las circulares completas son material fuente externo, no contenido del sitio público.
+*Circular_comercial*.pdf
