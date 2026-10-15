@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
     <meta name="theme-color" content="#1D1D1B">
-    <meta name="description" content="POC interna de un simulador de financiación de vehículos FIAT para Grupo GRP. Usa exclusivamente datos ficticios; no constituye una oferta comercial.">
+    <meta name="description" content="POC multimarca de financiación de Grupo GRP. Referencia interna basada en circulares de octubre de 2026; no constituye una oferta comercial.">
     <meta name="robots" content="noindex, nofollow">
     <title>Simulador de Financiación | Grupo GRP · POC</title>
     <link rel="icon" type="image/png" href="./assets/favicon.png">
     <link rel="stylesheet" href="./styles.css">
     <script type="module" src="./js/app.js"></script>
   </head>
-  <body>
+  <body data-brand="fiat">
     <a class="skip-link" href="#main-content">Ir al contenido principal</a>
 
     <header class="site-header">
@@ -25,11 +25,11 @@
           <span class="brand-divider" aria-hidden="true"></span>
           <div class="brand-description"><strong>Grupo GRP</strong><span>Herramientas comerciales</span></div>
         </div>
-        <div class="fiat-lockup">
+        <div class="vehicle-lockup">
           <span class="header-caption">Financiación automotriz</span>
-          <div class="logo-frame fiat-logo" role="img" aria-label="FIAT">
-            <span class="wordmark" aria-hidden="true">FIAT</span>
-            <img class="brand-image" src="./assets/fiat-logo.png" alt="" width="340" height="250">
+          <div class="logo-frame vehicle-logo" id="active-brand-logo" data-brand="fiat" role="img" aria-label="FIAT">
+            <span class="wordmark" id="active-brand-wordmark" aria-hidden="true">FIAT</span>
+            <img class="brand-image" id="active-brand-image" src="./assets/brands/fiat.png" alt="" width="340" height="250">
           </div>
         </div>
       </div>
@@ -43,10 +43,18 @@
           <p class="subtitle">Herramienta interna para cotizaciones comerciales</p>
         </div>
         <div class="data-stamp">
-          <span class="illustrative-label"><span class="status-dot" aria-hidden="true"></span>Datos ilustrativos</span>
+          <span class="illustrative-label" id="circular-badge">Circular octubre 2026</span>
+          <span class="plan-status" id="brand-validity-status"></span>
           <span>Actualización: <time class="updated-date"></time></span>
         </div>
       </section>
+
+      <fieldset class="brand-selector" aria-describedby="brand-selector-help">
+        <legend>Seleccioná una marca</legend>
+        <p id="brand-selector-help">Cada marca tiene sus propias campañas y condiciones.</p>
+        <div class="brand-options" id="brand-options"></div>
+      </fieldset>
+      <p class="active-source-line" id="active-source-line"></p>
 
       <nav class="section-nav" aria-label="Secciones del simulador">
         <div class="tabs" role="tablist" aria-label="Herramientas">
@@ -60,7 +68,7 @@
           </button>
           <button class="tab" type="button" id="tab-data" role="tab" aria-selected="false" aria-controls="panel-data" tabindex="-1" data-tab="data">
             <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"/></svg>
-            Datos de demostración
+            Fuentes y vigencia
           </button>
         </div>
         <span class="nav-note">Moneda: pesos argentinos (ARS)</span>
@@ -68,8 +76,16 @@
 
       <noscript><div class="notice error-notice">Necesitás habilitar JavaScript para usar el simulador. Abrí la POC mediante un servidor local; no mediante file://.</div></noscript>
 
+      <aside class="card availability-card" id="availability-card" hidden aria-labelledby="availability-title">
+        <span class="poc-badge" id="availability-badge"></span>
+        <h2 id="availability-title"></h2>
+        <p id="availability-message"></p>
+        <p class="availability-source" id="availability-source"></p>
+        <button type="button" class="button button-secondary" id="clear-stored-selection">Limpiar selección guardada</button>
+      </aside>
+
       <section class="tab-panel quote-panel" id="panel-quote" role="tabpanel" aria-labelledby="tab-quote" tabindex="0">
-        <div class="quote-layout">
+        <div class="quote-layout" id="quote-workspace">
           <div class="quote-config">
             <div class="section-heading"><h2>Configurá tu cotización</h2><span>01 / Simulación</span></div>
             <form id="quote-form" class="card quote-form" novalidate>
@@ -77,13 +93,14 @@
                 <legend id="vehicle-legend"><span class="step-number" aria-hidden="true">01</span> Elegí tu vehículo</legend>
                 <div class="fields-grid">
                   <div class="field">
-                    <label for="model">Modelo FIAT</label>
+                    <label for="model" id="model-label">Modelo FIAT</label>
                     <select id="model" name="modelId" required aria-describedby="model-error" disabled></select>
                     <p class="field-error" id="model-error" hidden></p>
                   </div>
                   <div class="field">
                     <label for="version">Versión</label>
-                    <select id="version" name="versionId" required aria-describedby="version-error" disabled></select>
+                    <select id="version" name="versionId" aria-describedby="version-hint version-error" disabled></select>
+                    <p class="field-hint" id="version-hint"></p>
                     <p class="field-error" id="version-error" hidden></p>
                   </div>
                   <div class="field">
@@ -111,7 +128,7 @@
                 </fieldset>
                 <div class="fields-grid finance-fields">
                   <div class="field field-wide">
-                    <label for="plan">Entidad y plan de demostración</label>
+                    <label for="plan">Entidad y campaña comercial</label>
                     <select id="plan" name="planId" required aria-describedby="plan-hint plan-error" disabled></select>
                     <p class="field-hint" id="plan-hint">Sólo se muestran planes vigentes compatibles.</p>
                     <p class="field-error" id="plan-error" hidden></p>
@@ -147,15 +164,16 @@
             </div>
             <article class="card quote-result" id="quote-result" hidden aria-label="Resultado de la cotización">
               <div class="installment-hero">
-                <div class="hero-overline"><span>Cuota mensual inicial estimada</span><span class="demo-tag">DEMO</span></div>
+                <div class="hero-overline"><span>Cuota mensual inicial estimada</span><span class="circular-tag" id="result-rate-type"></span></div>
                 <p class="installment-amount" id="result-installment"></p>
                 <p class="hero-caption">Pesos argentinos · cuota orientativa</p>
                 <dl class="hero-metrics">
                   <div><dt>Plazo</dt><dd id="result-months"></dd></div>
-                  <div><dt>TNA ficticia</dt><dd id="result-tna"></dd></div>
-                  <div><dt>CFT ficticio</dt><dd id="result-cft"></dd></div>
+                  <div><dt>TNA</dt><dd id="result-tna"></dd></div>
+                  <div><dt>Aporte CE · interno</dt><dd id="result-ce"></dd></div>
                 </dl>
               </div>
+              <aside class="uva-warning" id="quote-uva-warning" hidden aria-label="Advertencia de ajuste UVA"></aside>
               <div class="result-body">
                 <div class="vehicle-summary">
                   <div class="vehicle-icon" aria-hidden="true"><svg viewBox="0 0 40 30"><path d="m7 11 4-7h17l5 7 3 3v9h-4m-24 0H4v-9l3-3Zm0 0h26M10 23h20M9 15h4m14 0h4"/><circle cx="10" cy="23" r="3"/><circle cx="30" cy="23" r="3"/></svg></div>
@@ -163,20 +181,23 @@
                 </div>
                 <div class="result-plan"><strong id="result-entity"></strong><span id="result-plan"></span><span id="result-customer" class="muted"></span></div>
                 <dl class="result-breakdown">
-                  <div><dt>Precio de lista</dt><dd id="result-price"></dd></div>
+                  <div><dt>Precio de lista <span class="metric-note">Ilustrativo / manual</span></dt><dd id="result-price"></dd></div>
                   <div><dt>Anticipo ingresado</dt><dd id="result-down-payment"></dd></div>
                   <div><dt>Monto solicitado</dt><dd id="result-requested"></dd></div>
                   <div class="financed-row"><dt>Monto financiado elegible</dt><dd id="result-eligible"></dd></div>
                   <div><dt>LTV máximo</dt><dd id="result-ltv"></dd></div>
                   <div><dt>Tope de monto del plan</dt><dd id="result-max"></dd></div>
-                  <div><dt>Gastos estimados <span id="result-expense-pct"></span></dt><dd id="result-expenses"></dd></div>
-                  <div><dt>Total nominal de cuotas</dt><dd id="result-total"></dd></div>
+                  <div><dt>Cuota por $1.000 con IVA</dt><dd id="result-coefficient"></dd></div>
+                  <div><dt>Canal</dt><dd id="result-channel"></dd></div>
+                  <div><dt>CFT</dt><dd class="not-informed">No informado en la circular</dd></div>
+                  <div><dt id="result-total-label">Total nominal estimado de cuotas</dt><dd id="result-total"></dd></div>
                   <div class="gap-row"><dt>Diferencia sin financiar</dt><dd id="result-gap"></dd></div>
                 </dl>
                 <div class="cap-notice" id="cap-notice" hidden role="status"><strong>Necesitás aumentar el anticipo</strong><p id="cap-message"></p></div>
                 <p class="coverage-note" id="coverage-note">El monto solicitado está cubierto por este escenario.</p>
                 <p class="result-note" id="result-method"></p>
-                <p class="result-note">Los gastos se pagan aparte. El total nominal no incluye anticipo, gastos, seguros, impuestos ni otros cargos.</p>
+                <p class="result-note">Aporte CE: informativo del concesionario; no es gasto ni anticipo del cliente. El total no incluye anticipo, seguro automotor, impuestos ni otros cargos.</p>
+                <div class="result-source"><strong id="result-source"></strong><span id="result-source-file"></span><span id="result-validity"></span></div>
                 <p class="result-date">Simulación: <time id="result-date"></time> · Actualización de datos: <time class="updated-date"></time></p>
               </div>
             </article>
@@ -189,6 +210,7 @@
       </section>
 
       <section class="tab-panel compare-panel" id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" tabindex="0" hidden>
+        <div id="comparison-workspace">
         <div class="section-heading compare-heading"><div><h2>Dos alternativas, un mismo escenario</h2><p>Compará condiciones sin cambiar el vehículo ni el anticipo.</p></div><button type="button" class="text-button" id="edit-scenario">Editar en Cotizador <span aria-hidden="true">↗</span></button></div>
         <div class="card scenario-context" id="comparison-context"></div>
         <p class="notice error-notice" id="compare-error" role="status" hidden></p>
@@ -200,36 +222,38 @@
           <div class="compare-actions"><button type="submit" class="button button-primary" id="compare-button" disabled>Comparar alternativas</button><span class="muted" id="compare-status" role="status" aria-live="polite"></span></div>
         </form>
         <div class="card comparison-result" id="comparison-result" hidden>
-          <div class="comparison-table-heading"><h3>Comparación de condiciones</h3><span class="comparison-legend"><span aria-hidden="true"></span>Menor valor numérico, no recomendación</span></div>
+          <div class="comparison-table-heading"><h3>Comparación de condiciones</h3><span class="comparison-legend"><span aria-hidden="true"></span>Menor valor comparable, no recomendación</span></div>
+          <aside class="uva-warning" id="comparison-uva-warning" hidden aria-label="Advertencia de comparación UVA"></aside>
           <p class="table-scroll-hint">En pantallas chicas, deslizá la tabla para ver ambas alternativas.</p>
           <div class="table-scroll" role="region" aria-label="Comparación de alternativas; tabla con desplazamiento horizontal" tabindex="0">
-            <table class="comparison-table"><caption class="sr-only">Condiciones de las dos alternativas para el mismo vehículo, precio de lista y anticipo. Se destaca el menor valor de cada métrica, sin recomendar un plan.</caption><thead id="comparison-head"></thead><tbody id="comparison-body"></tbody></table>
+            <table class="comparison-table"><caption class="sr-only">Condiciones de alternativas de la misma marca y vehículo, precio y anticipo. Sólo se destacan valores conceptualmente comparables, sin recomendar un plan.</caption><thead id="comparison-head"></thead><tbody id="comparison-body"></tbody></table>
           </div>
-          <div class="comparison-footnote"><p>Un monto financiado menor también se destaca: revisá cuánto queda sin financiar. Los valores iguales se indican en ambas alternativas.</p><p>El total nominal suma las cuotas redondeadas; no incluye anticipo, gastos, seguros ni impuestos. Las tasas y el CFT son ficticios.</p><p id="comparison-date"></p></div>
+          <div class="comparison-footnote"><p>No se resaltan aporte CE, coeficiente, capital financiado ni LTV como si fueran una ventaja. Las cuotas, TNA y totales de líneas UVA y pesos no se califican entre sí.</p><p>El total es una estimación aritmética de cuotas iniciales redondeadas, no una proyección UVA. No incluye anticipo, seguro automotor, impuestos ni otros cargos. CFT: no informado en la circular.</p><p id="comparison-source"></p><p id="comparison-date"></p></div>
         </div>
         <aside class="notice comparison-disclaimer" id="comparison-disclaimer"></aside>
         <div class="comparison-print"><button type="button" class="button button-print" id="print-compare" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3h10v5M7 17H4V9h16v8h-3M7 14h10v7H7Z"/></svg>Imprimir / Guardar PDF</button></div>
+        </div>
       </section>
 
       <section class="tab-panel data-panel" id="panel-data" role="tabpanel" aria-labelledby="tab-data" tabindex="0" hidden>
-        <div class="section-heading"><div><h2>Transparencia desde el primer dato</h2><p>Este catálogo existe para demostrar el funcionamiento, no para ofrecer financiación.</p></div><span class="poc-badge">100% DEMO</span></div>
+        <div class="section-heading"><div><h2>Fuentes y vigencia</h2><p>Condiciones por marca, con origen verificable y vigencia mensual.</p></div><span class="poc-badge" id="source-scope-badge">PROMOCIONES 0 KM</span></div>
         <div class="data-overview">
-          <article class="card data-explainer"><span class="overline">Origen de la información</span><h3>Datos ficticios. Lógica verificable.</h3><p>Todos los precios, tasas, CFT, coeficientes, gastos y topes son inventados. Las entidades con el nombre “Demo” no representan bancos ni acuerdos comerciales reales.</p><p>Los modelos y versiones sirven de referencia ilustrativa; no garantizan disponibilidad. No se proyectan UVA ni inflación.</p><div class="data-source-note"><strong>En una versión productiva</strong><p>Los datos vendrían de un panel administrativo, una planilla controlada o una API, con permisos, revisión y trazabilidad de cada actualización.</p></div></article>
-          <article class="card data-facts"><h3>Esta demostración incluye</h3><dl><div><dt>Modelos FIAT ilustrativos</dt><dd id="model-count"></dd></div><div><dt>Planes ficticios</dt><dd id="plan-count"></dd></div><div><dt>Actualización de la POC</dt><dd><time class="updated-date"></time></dd></div><div><dt>Control de vigencia</dt><dd>Fecha del dispositivo</dd></div></dl><p>No se solicitan datos personales ni se envían cotizaciones a servicios externos.</p></article>
+          <article class="card data-explainer"><span class="overline">Origen de la información</span><h3 id="source-brand"></h3><dl class="source-details"><div><dt>Circular</dt><dd id="source-circular"></dd></div><div><dt>Archivo fuente</dt><dd id="source-filename"></dd></div><div><dt>Páginas utilizadas</dt><dd id="source-pages"></dd></div><div><dt>Vigencia</dt><dd id="source-validity"></dd></div></dl><p id="source-status-message"></p><div class="data-source-note"><strong>Alcance de esta iteración</strong><p id="source-scope"></p><p>Los precios precargados son ilustrativos. No se informa CFT en las tablas seleccionadas. Aporte CE es un aporte del concesionario, no un gasto del cliente.</p></div></article>
+          <article class="card data-facts"><h3>Información de la marca activa</h3><dl><div><dt>Modelos de referencia</dt><dd id="model-count"></dd></div><div><dt>Planes cargados</dt><dd id="plan-count"></dd></div><div><dt>Alternativas de plazo</dt><dd id="term-count"></dd></div><div><dt>Actualización de la POC</dt><dd><time class="updated-date"></time></dd></div><div><dt>Control de vigencia</dt><dd>Fecha del dispositivo</dd></div></dl><p>Los PDFs no se publican ni se enlazan desde este sitio. No se solicitan datos personales ni se envían cotizaciones a servicios externos.</p></article>
         </div>
-        <div class="section-heading catalog-heading"><h3>Catálogo de planes de demostración</h3><span id="catalog-status"></span></div>
-        <p class="catalog-help">Cada plan declara <code>demo: true</code>. La vigencia es ficticia e inclusiva; los planes vencidos o futuros se excluyen del cotizador y del comparador.</p>
-        <div class="demo-plan-list" id="demo-plan-list"></div>
-        <p class="authorization-note">POC no oficial. El uso definitivo de marcas y activos requiere autorización de sus titulares. No implica aprobación o patrocinio de FIAT.</p>
+        <div class="section-heading catalog-heading"><h3>Campañas y condiciones de origen</h3><span id="catalog-status"></span></div>
+        <p class="catalog-help">Vigencia inclusiva. Una circular vencida o futura permanece consultable aquí, pero no permite generar cotizaciones. Cada campaña identifica su fuente y página.</p>
+        <div class="source-plan-list" id="plan-list"></div>
+        <p class="authorization-note">POC no oficial. Antes de publicar condiciones comerciales reales se necesita autorización del cliente. El uso de marcas y activos requiere permiso de sus titulares; no implica aprobación ni patrocinio de ninguna marca.</p>
       </section>
 
       <aside class="disclaimer" aria-labelledby="disclaimer-title">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/></svg>
-        <div><h2 id="disclaimer-title">Una simulación, no una oferta financiera</h2><p id="financial-disclaimer"></p></div>
+        <div><h2 id="disclaimer-title">Una referencia interna, no una oferta financiera</h2><p id="financial-disclaimer"></p><p id="price-disclaimer"></p></div>
       </aside>
     </main>
 
-    <footer class="site-footer"><div class="container"><span>Grupo GRP <span class="footer-separator" aria-hidden="true">/</span> FIAT · <span id="footer-year"></span></span><p>POC interna · Datos ilustrativos · No constituye oferta comercial</p></div></footer>
+    <footer class="site-footer"><div class="container"><span>Grupo GRP <span class="footer-separator" aria-hidden="true">/</span> <span id="footer-brand">FIAT</span> · <span id="footer-year"></span></span><p>POC interna · Verificar vigencia · No constituye oferta comercial</p></div></footer>
     <div class="sr-only" id="app-announcer" role="status" aria-live="polite" aria-atomic="true"></div>
   </body>
 </html>

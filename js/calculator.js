@@ -1,4 +1,4 @@
-/** Motor puro: no conoce el DOM, localStorage, modelos ni tasas de la demo. */
+/** Motor puro: no conoce DOM, almacenamiento ni catálogo. Recibe la marca, el modelo y el plan. */
 export const roundMoney = (amount) => Math.round(amount);
 
 function dateKey(date) {
@@ -13,6 +13,7 @@ function dateKey(date) {
 
 /** Vigencia inclusiva; se usa la fecha local del dispositivo, no la fecha de actualización. */
 export function getPlanStatus(plan, asOf = new Date()) {
+  if (plan?.status === 'pending') return 'pending';
   const today = dateKey(asOf);
   const from = dateKey(plan?.validFrom);
   const to = dateKey(plan?.validTo);
@@ -22,12 +23,17 @@ export function getPlanStatus(plan, asOf = new Date()) {
   return 'active';
 }
 
-export function isPlanAvailable(plan, { modelId, customerType, asOf = new Date() }) {
-  return plan?.demo === true
+export function isPlanCompatible(plan, { brandId, modelId, versionId = '', customerType }) {
+  return plan?.dataStatus === 'commercial-circular'
+    && Boolean(brandId) && plan.brandId === brandId
     && plan.currency === 'ARS'
-    && getPlanStatus(plan, asOf) === 'active'
     && Array.isArray(plan.modelIds) && plan.modelIds.includes(modelId)
-    && Array.isArray(plan.customerTypes) && plan.customerTypes.includes(customerType);
+    && Array.isArray(plan.customerTypes) && plan.customerTypes.includes(customerType)
+    && (plan.versionIds === undefined || (Array.isArray(plan.versionIds) && plan.versionIds.includes(versionId)));
+}
+
+export function isPlanAvailable(plan, selection) {
+  return isPlanCompatible(plan, selection) && getPlanStatus(plan, selection.asOf ?? new Date()) === 'active';
 }
 
 export function validateAmounts(price, downPayment) {
@@ -48,54 +54,55 @@ export function validateAmounts(price, downPayment) {
 function validTerm(term) {
   return term && Number.isSafeInteger(term.months) && term.months > 0
     && Number.isFinite(term.tna) && term.tna >= 0
-    && Number.isFinite(term.cft) && term.cft >= 0
-    && Number.isFinite(term.maxLtvPct) && term.maxLtvPct > 0 && term.maxLtvPct <= 100
-    && Number.isFinite(term.maxAmount) && term.maxAmount >= 1
-    && Number.isFinite(term.expensePct) && term.expensePct >= 0
-    && (term.installmentCoefficient == null
-      || (Number.isFinite(term.installmentCoefficient) && term.installmentCoefficient > 0));
+    && Number.isFinite(term.dealerContributionPct) && term.dealerContributionPct >= 0 && term.dealerContributionPct <= 100
+    && Number.isFinite(term.installmentPerThousandWithVat) && term.installmentPerThousandWithVat > 0;
 }
 
-/**
- * Coeficiente explícito > sistema francés > capital / meses para TNA cero.
- * La forma con exponente negativo evita overflow en potencias positivas.
- */
+/** Coeficiente de la circular, incluso con TNA cero. No hay fallback financiero ni proyección UVA. */
 export function calculateInstallment(principal, term) {
-  if (term.installmentCoefficient != null) return principal * term.installmentCoefficient;
-  const monthlyRate = term.tna / 100 / 12;
-  if (monthlyRate === 0) return principal / term.months;
-  const denominator = -Math.expm1(-term.months * Math.log1p(monthlyRate));
-  return principal * monthlyRate / denominator;
+  return principal / 1000 * term.installmentPerThousandWithVat;
 }
 
-export function calculateQuote({ price, downPayment, modelId, customerType, plan, months, asOf = new Date() }) {
+export function calculateQuote({ price, downPayment, brandId, modelId, versionId = '', model, customerType, plan, months, asOf = new Date() }) {
   const errors = validateAmounts(price, downPayment);
-  if (!modelId) errors.modelId = 'Seleccioná un modelo.';
+  if (!brandId) errors.brandId = 'Seleccioná una marca.';
+  if (!modelId || !model || model.id !== modelId || model.brandId !== brandId || !Array.isArray(model.versions)) {
+    errors.modelId = 'Seleccioná un modelo de la marca activa.';
+  } else if ((model.versions.length && !model.versions.some((version) => version.id === versionId))
+    || (!model.versions.length && versionId)) {
+    errors.versionId = 'Seleccioná una versión compatible con el modelo.';
+  }
   if (!customerType) errors.customerType = 'Seleccioná un tipo de cliente.';
   if (!plan) {
     errors.planId = 'Seleccioná un plan disponible.';
-  } else if (plan.demo !== true || plan.currency !== 'ARS') {
-    errors.planId = 'Sólo se habilitan planes demo en pesos argentinos.';
+  } else if (plan.dataStatus !== 'commercial-circular' || plan.currency !== 'ARS') {
+    errors.planId = 'Se requiere un plan de una circular comercial en pesos argentinos.';
+  } else if (plan.brandId !== brandId) {
+    errors.planId = 'No se permiten planes de otra marca.';
   } else if (getPlanStatus(plan, asOf) !== 'active') {
-    errors.planId = 'Este plan está vencido, aún no está vigente o tiene fechas inválidas.';
-  } else if (!isPlanAvailable(plan, { modelId, customerType, asOf })) {
-    errors.planId = 'El plan no es compatible con el modelo o el tipo de cliente.';
+    errors.planId = 'La circular está vencida, aún no está vigente o tiene fechas inválidas. Se necesita una circular vigente.';
+  } else if (!isPlanCompatible(plan, { brandId, modelId, versionId, customerType })) {
+    errors.planId = 'El plan no es compatible con el modelo, la versión o el tipo de cliente.';
+  } else if (!Number.isFinite(plan.maxLtvPct) || plan.maxLtvPct <= 0 || plan.maxLtvPct > 100
+    || !Number.isFinite(plan.maxAmount) || plan.maxAmount < 1 || plan.maxAmount > Number.MAX_SAFE_INTEGER
+    || typeof plan.isUva !== 'boolean' || !plan.source?.circular || !plan.source?.filename
+    || !Number.isSafeInteger(plan.source?.page) || plan.source.page < 1) {
+    errors.planId = 'El plan no tiene topes o metadatos de fuente válidos.';
   }
   const term = Array.isArray(plan?.terms) ? plan.terms.find((item) => item?.months === months) : undefined;
   if (!validTerm(term)) errors.months = 'Seleccioná un plazo con condiciones válidas.';
   if (Object.keys(errors).length) return { ok: false, errors };
 
   const requested = price - downPayment;
-  const ltvLimit = price * term.maxLtvPct / 100;
+  const ltvLimit = price * plan.maxLtvPct / 100;
   // Hacia abajo al aplicar los topes: redondear al más cercano podría exceder el LTV.
-  const eligible = Math.floor(Math.min(requested, ltvLimit, term.maxAmount));
+  const eligible = Math.floor(Math.min(requested, ltvLimit, plan.maxAmount));
   if (eligible <= 0) {
     return { ok: false, errors: { downPayment: 'El monto elegible debe alcanzar al menos un peso.' } };
   }
   const rawInstallment = calculateInstallment(eligible, term);
-  const rawExpenses = eligible * term.expensePct / 100;
-  if (![rawInstallment, rawExpenses, rawInstallment * months].every(Number.isFinite)
-    || Math.max(rawInstallment, rawExpenses, rawInstallment * months) > Number.MAX_SAFE_INTEGER) {
+  if (![rawInstallment, rawInstallment * months].every(Number.isFinite)
+    || Math.max(rawInstallment, rawInstallment * months) > Number.MAX_SAFE_INTEGER) {
     return { ok: false, errors: { price: 'Los importes exceden el rango de cálculo seguro.' } };
   }
   const installment = roundMoney(rawInstallment);
@@ -104,22 +111,24 @@ export function calculateQuote({ price, downPayment, modelId, customerType, plan
   }
   const gap = roundMoney(requested - eligible);
   const cappedBy = [];
-  if (requested > ltvLimit && ltvLimit <= term.maxAmount) cappedBy.push('ltv');
-  if (requested > term.maxAmount && term.maxAmount <= ltvLimit) cappedBy.push('maxAmount');
+  if (requested > ltvLimit && ltvLimit <= plan.maxAmount) cappedBy.push('ltv');
+  if (requested > plan.maxAmount && plan.maxAmount <= ltvLimit) cappedBy.push('maxAmount');
 
   return {
     ok: true,
     price: roundMoney(price), downPayment: roundMoney(downPayment),
     requested: roundMoney(requested), eligible,
-    ltvLimit: Math.floor(ltvLimit), maxAmount: Math.floor(term.maxAmount),
-    expenses: roundMoney(rawExpenses), installment,
+    ltvLimit: Math.floor(ltvLimit), maxAmount: Math.floor(plan.maxAmount), installment,
     // Total de las cuotas exhibidas, coherente con el redondeo a pesos de la UI.
     totalInstallments: installment * months,
     gap, requiredDownPayment: roundMoney(price - eligible),
-    months, tna: term.tna, cft: term.cft, maxLtvPct: term.maxLtvPct,
-    expensePct: term.expensePct, cappedBy,
-    method: term.installmentCoefficient != null ? 'coefficient' : term.tna === 0 ? 'zero' : 'french',
+    months, tna: term.tna, cft: null, maxLtvPct: plan.maxLtvPct,
+    dealerContributionPct: term.dealerContributionPct,
+    installmentPerThousandWithVat: term.installmentPerThousandWithVat,
+    cappedBy, isUva: plan.isUva, method: 'circular-per-thousand',
     planId: plan.id, entity: plan.entity, planName: plan.name,
-    modelId, customerType, calculatedOn: dateKey(asOf),
+    brandId, modelId, versionId, customerType, channel: plan.channel,
+    source: { ...plan.source }, validFrom: plan.validFrom, validTo: plan.validTo,
+    calculatedOn: dateKey(asOf),
   };
 }
