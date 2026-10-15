@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="es-AR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#1D1D1B">
+    <meta name="description" content="POC interna de un simulador de financiación de vehículos FIAT para Grupo GRP. Usa exclusivamente datos ficticios; no constituye una oferta comercial.">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Simulador de Financiación | Grupo GRP · POC</title>
+    <link rel="icon" type="image/png" href="./assets/favicon.png">
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./js/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Ir al contenido principal</a>
+
+    <header class="site-header">
+      <div class="container brand-bar">
+        <div class="brand-lockup">
+          <div class="logo-frame grp-logo" role="img" aria-label="Grupo GRP">
+            <span class="wordmark" aria-hidden="true">GRP<span class="wordmark-rule"></span></span>
+            <img class="brand-image" src="./assets/grp-logo.png" alt="" width="1016" height="412">
+          </div>
+          <span class="brand-divider" aria-hidden="true"></span>
+          <div class="brand-description"><strong>Grupo GRP</strong><span>Herramientas comerciales</span></div>
+        </div>
+        <div class="fiat-lockup">
+          <span class="header-caption">Financiación automotriz</span>
+          <div class="logo-frame fiat-logo" role="img" aria-label="FIAT">
+            <span class="wordmark" aria-hidden="true">FIAT</span>
+            <img class="brand-image" src="./assets/fiat-logo.png" alt="" width="340" height="250">
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container" id="main-content">
+      <section class="intro" aria-labelledby="app-title">
+        <div>
+          <div class="eyebrow"><span class="poc-badge">POC</span><span>Uso interno · Grupo GRP</span></div>
+          <h1 id="app-title">Simulador de Financiación</h1>
+          <p class="subtitle">Herramienta interna para cotizaciones comerciales</p>
+        </div>
+        <div class="data-stamp">
+          <span class="illustrative-label"><span class="status-dot" aria-hidden="true"></span>Datos ilustrativos</span>
+          <span>Actualización: <time class="updated-date"></time></span>
+        </div>
+      </section>
+
+      <nav class="section-nav" aria-label="Secciones del simulador">
+        <div class="tabs" role="tablist" aria-label="Herramientas">
+          <button class="tab" type="button" id="tab-quote" role="tab" aria-selected="true" aria-controls="panel-quote" tabindex="0" data-tab="quote">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2m4 0h2m-8 4h2m4 0h2m-8 3h2m4 0h2"/></svg>
+            Cotizador
+          </button>
+          <button class="tab" type="button" id="tab-compare" role="tab" aria-selected="false" aria-controls="panel-compare" tabindex="-1" data-tab="compare">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v16M16 4v16M4 8l4-4 4 4m0 8 4 4 4-4"/></svg>
+            Comparador
+          </button>
+          <button class="tab" type="button" id="tab-data" role="tab" aria-selected="false" aria-controls="panel-data" tabindex="-1" data-tab="data">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"/></svg>
+            Datos de demostración
+          </button>
+        </div>
+        <span class="nav-note">Moneda: pesos argentinos (ARS)</span>
+      </nav>
+
+      <noscript><div class="notice error-notice">Necesitás habilitar JavaScript para usar el simulador. Abrí la POC mediante un servidor local; no mediante file://.</div></noscript>
+
+      <section class="tab-panel quote-panel" id="panel-quote" role="tabpanel" aria-labelledby="tab-quote" tabindex="0">
+        <div class="quote-layout">
+          <div class="quote-config">
+            <div class="section-heading"><h2>Configurá tu cotización</h2><span>01 / Simulación</span></div>
+            <form id="quote-form" class="card quote-form" novalidate>
+              <fieldset class="form-section" aria-labelledby="vehicle-legend">
+                <legend id="vehicle-legend"><span class="step-number" aria-hidden="true">01</span> Elegí tu vehículo</legend>
+                <div class="fields-grid">
+                  <div class="field">
+                    <label for="model">Modelo FIAT</label>
+                    <select id="model" name="modelId" required aria-describedby="model-error" disabled></select>
+                    <p class="field-error" id="model-error" hidden></p>
+                  </div>
+                  <div class="field">
+                    <label for="version">Versión</label>
+                    <select id="version" name="versionId" required aria-describedby="version-error" disabled></select>
+                    <p class="field-error" id="version-error" hidden></p>
+                  </div>
+                  <div class="field">
+                    <label for="price">Precio de lista</label>
+                    <div class="money-field"><span aria-hidden="true">$</span><input id="price" name="price" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" required aria-describedby="price-hint price-error"></div>
+                    <p class="field-hint" id="price-hint">Precio demo editable · pesos sin centavos.</p>
+                    <p class="field-error" id="price-error" hidden></p>
+                  </div>
+                  <div class="field">
+                    <label for="down-payment">Anticipo</label>
+                    <div class="money-field"><span aria-hidden="true">$</span><input id="down-payment" name="downPayment" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" required aria-describedby="down-payment-hint down-payment-error"></div>
+                    <p class="field-hint" id="down-payment-hint">Importe que entrega el cliente.</p>
+                    <p class="field-error" id="down-payment-error" hidden></p>
+                  </div>
+                </div>
+                <div class="requested-preview"><span>Monto solicitado <span class="muted">(antes de topes)</span></span><strong id="requested-preview">—</strong></div>
+              </fieldset>
+
+              <fieldset class="form-section finance-section" aria-labelledby="finance-legend">
+                <legend id="finance-legend"><span class="step-number" aria-hidden="true">02</span> Definí la financiación</legend>
+                <fieldset class="customer-field">
+                  <legend>Tipo de cliente</legend>
+                  <div class="customer-options" id="customer-options"></div>
+                  <p class="field-error" id="customer-error" hidden></p>
+                </fieldset>
+                <div class="fields-grid finance-fields">
+                  <div class="field field-wide">
+                    <label for="plan">Entidad y plan de demostración</label>
+                    <select id="plan" name="planId" required aria-describedby="plan-hint plan-error" disabled></select>
+                    <p class="field-hint" id="plan-hint">Sólo se muestran planes vigentes compatibles.</p>
+                    <p class="field-error" id="plan-error" hidden></p>
+                  </div>
+                  <div class="field">
+                    <label for="term">Plazo de financiación</label>
+                    <select id="term" name="months" required aria-describedby="term-error" disabled></select>
+                    <p class="field-error" id="term-error" hidden></p>
+                  </div>
+                  <div class="plan-limit-preview"><span>Límite del plan seleccionado</span><strong id="plan-limit">—</strong><span id="plan-ltv">Calculado sobre el precio de lista</span></div>
+                </div>
+                <p class="plan-notes" id="plan-notes"></p>
+              </fieldset>
+
+              <div class="form-actions">
+                <button class="button button-primary" type="submit" id="calculate-button" disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6M20 4v7h-7"/></svg>
+                  Recalcular
+                </button>
+                <button class="button button-secondary" type="button" id="clear-button">Limpiar</button>
+              </div>
+              <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+            </form>
+            <div class="privacy-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z"/><path d="m8 12 3 3 5-6"/></svg><p>Sin datos personales. Tu última selección se guarda únicamente en este navegador. <strong>Limpiar</strong> elimina esa selección.</p></div>
+          </div>
+
+          <aside class="quote-summary" aria-labelledby="summary-title">
+            <div class="section-heading"><h2 id="summary-title">Tu simulación</h2><span class="summary-indicator" id="summary-indicator">Lista para explorar</span></div>
+            <div class="card result-empty" id="result-empty">
+              <svg class="empty-icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="10" y="5" width="28" height="38" rx="4"/><path d="M16 14h16M16 22h4m8 0h4m-16 7h4m8 0h4m-16 7h4m8 0h4"/></svg>
+              <h3>Explorá una nueva cotización</h3>
+              <p id="empty-message">Completá los datos y presioná Recalcular para ver el resultado.</p>
+            </div>
+            <article class="card quote-result" id="quote-result" hidden aria-label="Resultado de la cotización">
+              <div class="installment-hero">
+                <div class="hero-overline"><span>Cuota mensual inicial estimada</span><span class="demo-tag">DEMO</span></div>
+                <p class="installment-amount" id="result-installment"></p>
+                <p class="hero-caption">Pesos argentinos · cuota orientativa</p>
+                <dl class="hero-metrics">
+                  <div><dt>Plazo</dt><dd id="result-months"></dd></div>
+                  <div><dt>TNA ficticia</dt><dd id="result-tna"></dd></div>
+                  <div><dt>CFT ficticio</dt><dd id="result-cft"></dd></div>
+                </dl>
+              </div>
+              <div class="result-body">
+                <div class="vehicle-summary">
+                  <div class="vehicle-icon" aria-hidden="true"><svg viewBox="0 0 40 30"><path d="m7 11 4-7h17l5 7 3 3v9h-4m-24 0H4v-9l3-3Zm0 0h26M10 23h20M9 15h4m14 0h4"/><circle cx="10" cy="23" r="3"/><circle cx="30" cy="23" r="3"/></svg></div>
+                  <div><h3 id="result-model"></h3><p id="result-version"></p></div>
+                </div>
+                <div class="result-plan"><strong id="result-entity"></strong><span id="result-plan"></span><span id="result-customer" class="muted"></span></div>
+                <dl class="result-breakdown">
+                  <div><dt>Precio de lista</dt><dd id="result-price"></dd></div>
+                  <div><dt>Anticipo ingresado</dt><dd id="result-down-payment"></dd></div>
+                  <div><dt>Monto solicitado</dt><dd id="result-requested"></dd></div>
+                  <div class="financed-row"><dt>Monto financiado elegible</dt><dd id="result-eligible"></dd></div>
+                  <div><dt>LTV máximo</dt><dd id="result-ltv"></dd></div>
+                  <div><dt>Tope de monto del plan</dt><dd id="result-max"></dd></div>
+                  <div><dt>Gastos estimados <span id="result-expense-pct"></span></dt><dd id="result-expenses"></dd></div>
+                  <div><dt>Total nominal de cuotas</dt><dd id="result-total"></dd></div>
+                  <div class="gap-row"><dt>Diferencia sin financiar</dt><dd id="result-gap"></dd></div>
+                </dl>
+                <div class="cap-notice" id="cap-notice" hidden role="status"><strong>Necesitás aumentar el anticipo</strong><p id="cap-message"></p></div>
+                <p class="coverage-note" id="coverage-note">El monto solicitado está cubierto por este escenario.</p>
+                <p class="result-note" id="result-method"></p>
+                <p class="result-note">Los gastos se pagan aparte. El total nominal no incluye anticipo, gastos, seguros, impuestos ni otros cargos.</p>
+                <p class="result-date">Simulación: <time id="result-date"></time> · Actualización de datos: <time class="updated-date"></time></p>
+              </div>
+            </article>
+            <div class="summary-actions">
+              <button type="button" class="button button-print" id="print-quote" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3h10v5M7 17H4V9h16v8h-3M7 14h10v7H7Z"/><path d="M16 11h1"/></svg>Imprimir / Guardar PDF</button>
+              <button type="button" class="text-button" id="go-compare">Comparar alternativas <span aria-hidden="true">→</span></button>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="tab-panel compare-panel" id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" tabindex="0" hidden>
+        <div class="section-heading compare-heading"><div><h2>Dos alternativas, un mismo escenario</h2><p>Compará condiciones sin cambiar el vehículo ni el anticipo.</p></div><button type="button" class="text-button" id="edit-scenario">Editar en Cotizador <span aria-hidden="true">↗</span></button></div>
+        <div class="card scenario-context" id="comparison-context"></div>
+        <p class="notice error-notice" id="compare-error" role="status" hidden></p>
+        <form id="compare-form" novalidate>
+          <div class="comparison-options">
+            <fieldset class="card alternative-card"><legend><span class="alternative-label">A</span> Alternativa A</legend><div class="field"><label for="compare-plan-a">Entidad y plan A</label><select id="compare-plan-a" required disabled></select></div><div class="field"><label for="compare-term-a">Plazo A</label><select id="compare-term-a" required disabled></select></div></fieldset>
+            <fieldset class="card alternative-card"><legend><span class="alternative-label">B</span> Alternativa B</legend><div class="field"><label for="compare-plan-b">Entidad y plan B</label><select id="compare-plan-b" required disabled></select></div><div class="field"><label for="compare-term-b">Plazo B</label><select id="compare-term-b" required disabled></select></div></fieldset>
+          </div>
+          <div class="compare-actions"><button type="submit" class="button button-primary" id="compare-button" disabled>Comparar alternativas</button><span class="muted" id="compare-status" role="status" aria-live="polite"></span></div>
+        </form>
+        <div class="card comparison-result" id="comparison-result" hidden>
+          <div class="comparison-table-heading"><h3>Comparación de condiciones</h3><span class="comparison-legend"><span aria-hidden="true"></span>Menor valor numérico, no recomendación</span></div>
+          <p class="table-scroll-hint">En pantallas chicas, deslizá la tabla para ver ambas alternativas.</p>
+          <div class="table-scroll" role="region" aria-label="Comparación de alternativas; tabla con desplazamiento horizontal" tabindex="0">
+            <table class="comparison-table"><caption class="sr-only">Condiciones de las dos alternativas para el mismo vehículo, precio de lista y anticipo. Se destaca el menor valor de cada métrica, sin recomendar un plan.</caption><thead id="comparison-head"></thead><tbody id="comparison-body"></tbody></table>
+          </div>
+          <div class="comparison-footnote"><p>Un monto financiado menor también se destaca: revisá cuánto queda sin financiar. Los valores iguales se indican en ambas alternativas.</p><p>El total nominal suma las cuotas redondeadas; no incluye anticipo, gastos, seguros ni impuestos. Las tasas y el CFT son ficticios.</p><p id="comparison-date"></p></div>
+        </div>
+        <aside class="notice comparison-disclaimer" id="comparison-disclaimer"></aside>
+        <div class="comparison-print"><button type="button" class="button button-print" id="print-compare" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3h10v5M7 17H4V9h16v8h-3M7 14h10v7H7Z"/></svg>Imprimir / Guardar PDF</button></div>
+      </section>
+
+      <section class="tab-panel data-panel" id="panel-data" role="tabpanel" aria-labelledby="tab-data" tabindex="0" hidden>
+        <div class="section-heading"><div><h2>Transparencia desde el primer dato</h2><p>Este catálogo existe para demostrar el funcionamiento, no para ofrecer financiación.</p></div><span class="poc-badge">100% DEMO</span></div>
+        <div class="data-overview">
+          <article class="card data-explainer"><span class="overline">Origen de la información</span><h3>Datos ficticios. Lógica verificable.</h3><p>Todos los precios, tasas, CFT, coeficientes, gastos y topes son inventados. Las entidades con el nombre “Demo” no representan bancos ni acuerdos comerciales reales.</p><p>Los modelos y versiones sirven de referencia ilustrativa; no garantizan disponibilidad. No se proyectan UVA ni inflación.</p><div class="data-source-note"><strong>En una versión productiva</strong><p>Los datos vendrían de un panel administrativo, una planilla controlada o una API, con permisos, revisión y trazabilidad de cada actualización.</p></div></article>
+          <article class="card data-facts"><h3>Esta demostración incluye</h3><dl><div><dt>Modelos FIAT ilustrativos</dt><dd id="model-count"></dd></div><div><dt>Planes ficticios</dt><dd id="plan-count"></dd></div><div><dt>Actualización de la POC</dt><dd><time class="updated-date"></time></dd></div><div><dt>Control de vigencia</dt><dd>Fecha del dispositivo</dd></div></dl><p>No se solicitan datos personales ni se envían cotizaciones a servicios externos.</p></article>
+        </div>
+        <div class="section-heading catalog-heading"><h3>Catálogo de planes de demostración</h3><span id="catalog-status"></span></div>
+        <p class="catalog-help">Cada plan declara <code>demo: true</code>. La vigencia es ficticia e inclusiva; los planes vencidos o futuros se excluyen del cotizador y del comparador.</p>
+        <div class="demo-plan-list" id="demo-plan-list"></div>
+        <p class="authorization-note">POC no oficial. El uso definitivo de marcas y activos requiere autorización de sus titulares. No implica aprobación o patrocinio de FIAT.</p>
+      </section>
+
+      <aside class="disclaimer" aria-labelledby="disclaimer-title">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/></svg>
+        <div><h2 id="disclaimer-title">Una simulación, no una oferta financiera</h2><p id="financial-disclaimer"></p></div>
+      </aside>
+    </main>
+
+    <footer class="site-footer"><div class="container"><span>Grupo GRP <span class="footer-separator" aria-hidden="true">/</span> FIAT · <span id="footer-year"></span></span><p>POC interna · Datos ilustrativos · No constituye oferta comercial</p></div></footer>
+    <div class="sr-only" id="app-announcer" role="status" aria-live="polite" aria-atomic="true"></div>
+  </body>
+</html>

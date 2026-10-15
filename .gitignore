@@ -1,0 +1,3 @@
+# Archivos locales; no forman parte de la aplicación.
+.DS_Store
+.playwright-mcp/
